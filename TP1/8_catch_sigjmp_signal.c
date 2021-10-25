@@ -91,11 +91,14 @@ int main(void) {
     if (signal(SIGUSR2, fonc) == SIG_ERR)
 	return 13;
 
-    if (sigsetjmp(mark, 0) != 0)
-	printf("Retour arrière\n");
-    printf("Attention à la division par zero !\n");
-    sleep(1);
-    int c = 1 / 0;
+    while (loop)
+    {
+    	if (sigsetjmp(mark, 0) != 0)
+	    printf("Retour arrière\n");
+    	printf("Attention à la division par zero !\n");
+    	sleep(1);
+    	int c = 1 / 0;
+    }
 
     return 0;
 }
