@@ -7,26 +7,26 @@
 
 int main(void)
 {
-    char c, d;
-    int Tube[2];
-    if (pipe(Tube) == -1)
+    char c, d; // Char c: Write in pipe by parent, char d: Read in pipe by child
+    int Tube[2]; // Pipe declaration
+    if (pipe(Tube) == -1) // Build pipe with error detection
     {
 	perror("pipe");
 	exit(EXIT_FAILURE);
     }
 
-    pid_t pid, wpid;
-    int status;
+    pid_t pid; // PID for fork
+    int status; // Status for exit child code
     
-    pid = fork();
+    pid = fork(); // Fork
 
-    if (pid == -1)
+    if (pid == -1) // Detection of fork failure
     {
 	perror("fork");
 	exit(EXIT_FAILURE);
     }
 
-    if (pid == 0)
+    if (pid == 0) // Child process
     {
 	printf("Je suis le fils\n");
 	close(Tube[1]); // Close useless space
@@ -39,7 +39,7 @@ int main(void)
 	close(Tube[0]); // Close pipe
 	_exit(EXIT_SUCCESS); // Exit son with success
     } 
-    else
+    else // Parent process
     {
 	close(Tube[0]);
 	printf("Je suis le père\n");
@@ -50,7 +50,7 @@ int main(void)
 	}
 
 	close(Tube[1]);
-	wait(NULL);
+	wait(NULL); // Wait child terminated
 	printf("Mon fils est mort\n");
 	exit(EXIT_SUCCESS);	
     }
