@@ -6,6 +6,15 @@
 #include <time.h>
 #include <unistd.h>
 
+static int lv_status = 1; // Living death status (alive or not)
+
+
+void catch(int sign) // Signal handler
+{
+    printf("LV dead\n");
+    lv_status = 0; // Living death is dead
+}
+
 
 int main(void)
 {
@@ -13,7 +22,6 @@ int main(void)
     // God process
     pid_t mb, js, ld, wpid; // Marcheur Blanc, John Snow, living dead
     int first = rand() % 2; // Winner
-
     int Tube[2]; // pipe between JS and living dead
     int pid, status, mb_location, js_location;
     // PIDs: pid (living dead in Pipe), status (exit code of living death)
@@ -36,20 +44,27 @@ int main(void)
 	    ld = fork(); // Fork foreach living death one by one
 	    if (ld == 0) // Living death process
 	    {
+		lv_status = 1;
 		int myppid = 0; // MB PID init
 		int mypid = getpid(); // Living Death PID
-		if (signal(SIGTERM, SIG_IGN)) // Catch dead signal 
-		    return 42; // Return the life answer
+		if (signal(SIGTERM, catch)) // Catch dead signal 
+		    _exit(42); // Return the life answer
 		if (!i) // If is the first living death
 		{
 		    myppid = getppid(); // The first living death get the
 		       			// MB PID, the condition avoid useless
 					// function
 		    write(Tube[1], &(myppid), 1); // Write MB PID in pipe
+		    sleep(1);
 		}
 		write(Tube[1], &(mypid), 1); // Write their PID in pipe
-		sleep(2); // Sleep to avoid time out (end process)
-		_exit(22); // Exit process with another code (debug)
+		while (1) // Wait the death
+		{
+		    if (!lv_status) // If the signal handler was called
+			_exit(42); // Exited with 42 == success
+		    sleep(2); // Sleep to avoid time out (end process)
+		}
+		_exit(22); // Exit process with another code (debug) == failed
 	    }
 	    else
 	    {
@@ -78,7 +93,7 @@ int main(void)
 	    int nb = 0; // Count the number of living death
 	    while (read(Tube[0], &pid, 1) > 0) // Read the living death PID 
 	    {
-		sleep(1); // Wait to avoid strange errors
+		// sleep(1); // Wait to avoid strange errors
 		printf("LV detected: %d\n", pid); // Debug message 
 		if (!nb++) // First living death
 		    mb_location = pid; // First living dead provide mb pid
