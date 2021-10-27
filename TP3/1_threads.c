@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 
@@ -14,9 +15,11 @@ struct arg {
 void *my_thread(void *arg)
 {
     int *num = arg;
-    sleep(1);
+    float d_time = (rand() / RAND_MAX) % 2000;
+    usleep(d_time);
     printf("Thread %d PID: %d\n", *num, getpid());
-    sleep(10);
+    d_time = (rand() / RAND_MAX) % 2000;
+    usleep(d_time);
     pthread_exit(40);
 }
 
@@ -27,6 +30,8 @@ int main(void)
     int num1 = 1, num2 = 2, num3 = 3;
     void *ret;
     pthread_t thr1, thr2, thr3;
+
+    srand(time(NULL));
 
     printf("Main thread PID: %d\n", getpid());
 
