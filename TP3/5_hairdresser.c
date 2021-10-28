@@ -9,15 +9,22 @@
 #include <unistd.h>
 
 
-static int nb_client, nb_client_max;
-sem_t wait_client = 0, wait_hair = 1, mutex_cpt = 1;
+sem_t wait_client, wait_hair, mutex_cpt;
+int nb_client = 0, nb_client_max = 0, *ret;
 
+int random_usec(int mod)
+{
+     return abs((rand() * 1000) % (mod * 1000));
+}
 
 
 void *hair(void *args)
 {
     while (1)
     {
+	printf("Coiffeur: J'attend\n");
+	sleep(2);
+	usleep(random_usec(7));
 	sem_wait(&wait_client);
 	printf("Coiffeur: Entrain de coiffer\n");
 	sem_post(&wait_hair);
@@ -30,54 +37,50 @@ void *client(void *args)
     sem_wait(&mutex_cpt);
     if (nb_client > nb_client_max)
     {
+	printf("Client: Plus de place !\n");
 	sem_post(&mutex_cpt);
-	return EXIT_FAILURE;
+	return ret;
     }
     nb_client++;
+    printf("Client: Nombre de client dans la file: %d\n", nb_client);
     sem_post(&mutex_cpt);
     sem_post(&wait_client);
     sem_wait(&wait_hair);
-    printf("Client: Je me fais coiffer (tid: %d\n", pthread_self());
+    printf("Client: Je me fais coiffer (tid: %ld)\n", pthread_self());
     sem_wait(&mutex_cpt);
     nb_client--;
     sem_post(&mutex_cpt);
-    return EXIT_SUCCESS;
 }
 
-/*
-void *client(void *args)
-{
-    struct arg_client *arg = args
-    struct queue *_queue = args->_queue;
-    sem_wait(&mutex_cpt);
-    if (nb_client > nb_client_max)
-    {
-	sem_post(&mutex_cpt);
-	disable_client(arg->_queue, arg->
-	return EXIT_FAILURE;
-    }
-    nb_client++;
-    sem_post(&mutex_cpt);
-}
-*/
 
 int main(int argc, char **argv)
 {
     if (argc == 1)
+    {
 	printf("Usage: %s <nb of client max>\n", argv[0]);
+	return 1;
+    }	
 
+    srand(time(NULL));
     nb_client_max = atoi(argv[1]);
 
-    int thr_client, thr_hair;
+    pthread_t thr_client, thr_hair;
 
-    struct queue *clients_queue = new_queue();
-
-    int e = pthread_create(&thr_client, NULL, client, NULL);
+    sem_post(&wait_hair);
+    sem_post(&mutex_cpt);
+    int e = pthread_create(&thr_hair, NULL, hair, NULL);
     if (e != 0)
 	errx(EXIT_FAILURE, "pthread_create() failed");
 
-    e = pthread_create(&thr_hair, NULL, hair, NULL);
-    if (e != 0)
-	errx(EXIT_FAILURE, "pthread_create() failed");
 
+    while (1)
+    {
+	sleep(1);
+	usleep(random_usec(5));
+	printf("Main: Nouveau client \n");
+	e = pthread_create(&thr_client, NULL, client, NULL);
+	if (e != 0)
+	    errx(EXIT_FAILURE, "pthread_create() failed");
+	usleep(random_usec(5));
+    }
 }
