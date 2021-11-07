@@ -24,6 +24,7 @@ int random_usec(int mod)
 }
 
 
+// Creation des threads avec gestion d'erreurs
 void thread_create(pthread_t *restrict thr, void *func, void *args)
 {
     int e = pthread_create(thr, NULL, func, args);
@@ -34,7 +35,7 @@ void thread_create(pthread_t *restrict thr, void *func, void *args)
 
 void *thread1(void *args)
 {
-    sem_wait(&sem);
+    sem_wait(&sem); // Debut de la zone critique
     struct args *arguments = args;
     usleep(random_usec(2));
     arguments->a += 1;
@@ -42,13 +43,13 @@ void *thread1(void *args)
     arguments->b += 1;
     usleep(random_usec(2));
     printf("Thread 1: %d / %d\n", arguments->a, arguments->b);
-    sem_post(&sem);
+    sem_post(&sem); // Fin de la zone critique
 }
 
 
 void *thread2(void *args)
 {
-    sem_wait(&sem);
+    sem_wait(&sem); // Debut de la zone critique
     struct args *arguments = args;
     usleep(random_usec(2));
     arguments->a *= 2;
@@ -56,13 +57,13 @@ void *thread2(void *args)
     arguments->b *= 2;
     usleep(random_usec(2));
     printf("Thread 2: %d / %d\n", arguments->a, arguments->b);
-    sem_post(&sem);
+    sem_post(&sem); // Fin de la zone critique
 }
 
 
 void *thread3(void *args)
 {
-    sem_wait(&sem);
+    sem_wait(&sem); // Debut de la zone critique
     struct args *arguments = args;
     usleep(random_usec(2));
     arguments->a -= 1;
@@ -70,7 +71,7 @@ void *thread3(void *args)
     arguments->b -= 1;
     usleep(random_usec(2));
     printf("Thread 3: %d / %d\n", arguments->a, arguments->b);
-    sem_post(&sem);
+    sem_post(&sem); // Fin de la zone critique
 }
 
 
@@ -131,6 +132,7 @@ int main(void)
     }
     sleep(2);
 
+    // Attend la fin des thread avant de stopper le main thread
     pthread_join(thr1, NULL);
     pthread_join(thr2, NULL);
     pthread_join(thr3, NULL);

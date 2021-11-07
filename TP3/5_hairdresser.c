@@ -25,9 +25,9 @@ void *hair(void *args)
 	printf("Coiffeur: J'attend\n");
 	sleep(2);
 	usleep(random_usec(7));
-	sem_wait(&wait_client);
+	sem_wait(&wait_client); // On attend le prochain client
 	printf("Coiffeur: Entrain de coiffer\n");
-	sem_post(&wait_hair);
+	sem_post(&wait_hair); // On libere la place
     }
 }
 
@@ -35,20 +35,20 @@ void *hair(void *args)
 void *client(void *args)
 {
     sem_wait(&mutex_cpt);
-    if (nb_client > nb_client_max)
+    if (nb_client > nb_client_max) // Plus de place
     {
 	printf("Client: Plus de place !\n");
 	sem_post(&mutex_cpt);
 	return ret;
     }
-    nb_client++;
+    nb_client++; // On ajoute le client au compteur
     printf("Client: Nombre de client dans la file: %d\n", nb_client);
     sem_post(&mutex_cpt);
-    sem_post(&wait_client);
-    sem_wait(&wait_hair);
+    sem_post(&wait_client); // On ajoute le client dans le semaphore
+    sem_wait(&wait_hair); // On attend la place de coiffeur
     printf("Client: Je me fais coiffer (tid: %ld)\n", pthread_self());
     sem_wait(&mutex_cpt);
-    nb_client--;
+    nb_client--; // On decremente le client du compteur
     sem_post(&mutex_cpt);
 }
 
@@ -68,12 +68,13 @@ int main(int argc, char **argv)
 
     sem_post(&wait_hair);
     sem_post(&mutex_cpt);
+    // Creation du coiffeur
     int e = pthread_create(&thr_hair, NULL, hair, NULL);
     if (e != 0)
 	errx(EXIT_FAILURE, "pthread_create() failed");
 
 
-    while (1)
+    while (1) // Creation des clients
     {
 	sleep(1);
 	usleep(random_usec(5));
