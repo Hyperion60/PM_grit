@@ -33,12 +33,12 @@ void *hair_man(void *args)
 	{
 	    sem_post(&mutex_cpt_man);
 	    sem_post(&mutex_cpt_woman);
-	    sem_post(&wait_hair_man);
+	    sem_post(&wait_hair_man); // On ajoute une place pour un homme
 	    printf("\033[0;34mCoiffeur homme:\033[0m Attend un homme\n");
-	    sem_wait(&wait_client_man);
+	    sem_wait(&wait_client_man); // On attend le prochain client
 	    printf("\033[0;34mCoiffeur homme:\033[0m Entrain de coiffer un homme\n");
 	    sem_wait(&mutex_cpt_man);
-	    nb_client_man--;
+	    nb_client_man--; // On decompte le nombre de clients
 	    sem_post(&mutex_cpt_man);
 	}
 	else
@@ -48,24 +48,24 @@ void *hair_man(void *args)
 	    {
 	        sem_post(&mutex_cpt_man);
 		sem_post(&mutex_cpt_woman);
-		sem_post(&wait_hair_woman);
+		sem_post(&wait_hair_woman); // On ajoute une place pour une femme
 	        printf("\033[0;34mCoiffeur homme:\033[0m Attend une femme\n");
-		sem_wait(&wait_client_woman);
+		sem_wait(&wait_client_woman); // On attend la prochaine cliente
 		printf("\033[0;34mCoiffeur homme:\033[0m Entrain de coiffer une femme\n");
 		sem_wait(&mutex_cpt_woman);
-		nb_client_woman--;
+		nb_client_woman--; // On decompte le nombre de clientes
 		sem_post(&mutex_cpt_woman);
 	    }
 	    else // S'il n'y a ni hommes ni femmes on attend le prochain.
 	    {
 		sem_post(&mutex_cpt_man);
 		sem_post(&mutex_cpt_woman);
-		sem_post(&wait_hair_man);
+		sem_post(&wait_hair_man); // On ajoute une place pour un homme
 	        printf("\033[0;34mCoiffeur homme:\033[0m Attend un homme\n");
-	        sem_wait(&wait_client_man);
+	        sem_wait(&wait_client_man); // On attend le prochain client
 		printf("\033[0;34mCoiffeur homme:\033[0m Entrain de coiffer un homme\n");
 		sem_wait(&mutex_cpt_man);
-		nb_client_man--;
+		nb_client_man--; // On decompte le nombre de clients
 		sem_post(&mutex_cpt_man);
 	    }
 
@@ -88,10 +88,10 @@ void *hair_woman(void *args)
 	    sem_post(&mutex_cpt_woman);
 	    sem_post(&wait_hair_woman); // On ajoute une place pour une femme
 	    printf("\033[0;31mCoiffeur femme:\033[0m Attend une femme\n");
-	    sem_wait(&wait_client_woman);
+	    sem_wait(&wait_client_woman); // On attend la prochaine cliente
 	    printf("\033[0;31mCoiffeur femme:\033[0m Entrain de coiffer une femme\n");
 	    sem_wait(&mutex_cpt_woman);
-	    nb_client_woman--;
+	    nb_client_woman--; // On decompte le nombre de clientes
 	    sem_post(&mutex_cpt_woman);
 	}
 	else
@@ -101,24 +101,24 @@ void *hair_woman(void *args)
 	    {
 	        sem_post(&mutex_cpt_man);
 		sem_post(&mutex_cpt_woman);
-		sem_post(&wait_hair_man);
+		sem_post(&wait_hair_man); // On ajoute une place pour un homme
 	        printf("\033[0;31mCoiffeur femme:\033[0m Attend un homme\n");
-		sem_wait(&wait_client_man);
+		sem_wait(&wait_client_man); // On attend le prochain client
 		printf("\033[0;31mCoiffeur femme:\033[0m Entrain de coiffer un homme\n");
 		sem_wait(&mutex_cpt_man);
-		nb_client_man--;
+		nb_client_man--; // On decompte le nombre de clients
 		sem_post(&mutex_cpt_man);
 	    }
 	    else  // S'il n'y a ni hommes ni femmes on attend la suivante
 	    {
 		sem_post(&mutex_cpt_man);
 		sem_post(&mutex_cpt_woman);
-		sem_post(&wait_hair_woman);
+		sem_post(&wait_hair_woman); // On ajoute une place pour une femme
 	        printf("\033[0;31mCoiffeur femme:\033[0m Attend une femme\n");
-	        sem_wait(&wait_client_woman);
+	        sem_wait(&wait_client_woman); // On attend la prochaine cliente
 		printf("\033[0;31mCoiffeur femme:\033[0m Entrain de coiffer une femme\n");
 		sem_wait(&mutex_cpt_woman);
-		nb_client_woman--;
+		nb_client_woman--; // On decompte le nombre de clientes
 		sem_post(&mutex_cpt_woman);
 	    }
 
@@ -139,7 +139,7 @@ void *client_man(void *args)
     nb_client_man++; // On augmente la file d'hommes
     printf("Nombre de client Homme %d/%d\n", nb_client_man, nb_client_max);
     sem_post(&mutex_cpt_man);
-    sem_post(&wait_client_man);
+    sem_post(&wait_client_man); // On ajoute le client dans le semaphore
     sem_wait(&wait_hair_man); // On attend la prochaine place pour les hommes
     printf("\033[0;36mClient homme:\033[0m Je me fais coiffer (tid: %ld)\n", pthread_self());
 }
@@ -148,16 +148,16 @@ void *client_man(void *args)
 void *client_woman(void *args)
 {
     sem_wait(&mutex_cpt_woman);
-    if (nb_client_woman > nb_client_max)
+    if (nb_client_woman > nb_client_max) // Plus de place
     {
         printf("\033[0;35mCliente femme:\033[0m Plus de place\n");
 	sem_post(&mutex_cpt_woman);
 	return ret;
     }
-    nb_client_woman++;
+    nb_client_woman++; // On augmente la file de femmes
     printf("Nombre de cliente Femme %d/%d\n", nb_client_woman, nb_client_max);
     sem_post(&mutex_cpt_woman);
-    sem_post(&wait_client_woman);
+    sem_post(&wait_client_woman); // On ajoute la cliente dans le semaphore
     sem_wait(&wait_hair_woman); // On attend la prochaine place pour les femmes
     printf("\033[0;35mCliente femme:\033[0m Je me fais coiffer (tid: %ld)\n", pthread_self());
 }
@@ -190,13 +190,14 @@ int main(int argc, char **argv)
 	errx(EXIT_FAILURE, "pthread_create() failed");
 
 
+    // Pour attendre que les coiffeurs demarrent
     sem_wait(&wait_hair_man);
     sem_wait(&wait_hair_woman);
     sem_post(&wait_hair_man);
     sem_post(&wait_hair_woman);
 
 
-    while (1)
+    while (1) // Creation des clients
     {
         sleep(1);
 	if (rand() % 2)
